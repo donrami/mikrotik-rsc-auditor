@@ -34,16 +34,6 @@
     "LICENSE",
     "package.json"
   ],
-  "files": [
-    "SKILL.md",
-    "scripts/*.py",
-    "scripts/__init__.py",
-    "references/",
-    "examples/",
-    "README.md",
-    "LICENSE",
-    "package.json"
-  ],
   "pi": {
     "skills": ["."]
   }

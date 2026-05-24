@@ -103,6 +103,13 @@ mikrotik-audit export.rsc --ioc
 mikrotik-audit export.rsc --lint my-script.rsc
 ```
 
+### Skip WiFi or Routing Checks (for non-wireless or non-routing devices)
+
+```bash
+mikrotik-audit export.rsc --skip-wifi
+mikrotik-audit export.rsc --skip-routing
+```
+
 ### All Features
 
 ```bash
@@ -187,9 +194,9 @@ Self-contained dark-mode compatible HTML with color-coded severity badges, score
 
 | Framework | Coverage |
 |-----------|----------|
-| **CIS RouterOS Benchmark v1.x** | 42 controls mapped |
-| **NIST SP 800-53** | 30+ controls (AC, AU, IA, SC, SI, PE, CP) |
-| **ISO 27001** | 25+ controls (A.8, A.9, A.10, A.12, A.13, A.17) |
+| **CIS RouterOS Benchmark v1.x** | 37 controls mapped |
+| **NIST SP 800-53** | 81 controls (AC, AU, IA, SC, SI, CM, CP) |
+| **ISO 27001** | 52 controls (A.5, A.6, A.7, A.8) |
 | **PCI-DSS** | 15+ requirements (1, 2, 4, 6, 7, 8, 10, 11) |
 
 ---
@@ -199,7 +206,7 @@ Self-contained dark-mode compatible HTML with color-coded severity badges, score
 ```
 mikrotik-rsc-auditor/
 ├── scripts/
-│   ├── audit_rsc.py              # Main entry point (2,860 lines)
+│   ├── audit_rsc.py              # Main entry point (2,901 lines)
 │   ├── cve_database.py            # CVE lookup + NVD API (1,111 lines)
 │   ├── conflict_analyzer.py       # 8 conflict types (1,551 lines)
 │   ├── conflict_explanations.py   # User-friendly explanations (650 lines)

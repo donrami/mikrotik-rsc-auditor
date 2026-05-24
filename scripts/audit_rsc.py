@@ -15,7 +15,7 @@ Usage:
   python audit_rsc.py export.rsc --format json     # JSON output
   python audit_rsc.py export.rsc --format html     # HTML report
   python audit_rsc.py export.rsc --severity high   # Only high+critical
-  python audit_rsc.py --check AUTH-001,FW-005      # Specific checks only
+  python audit_rsc.py export.rsc --check AUTH-001,FW-005      # Specific checks only
   python audit_rsc.py export.rsc --cve             # Include CVE check
   python audit_rsc.py export.rsc --cve --cve-live  # CVE + NVD live lookup
   python audit_rsc.py export.rsc --conflicts       # Rule conflict analysis
@@ -2806,11 +2806,18 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  python audit_rsc.py export.rsc                          # Text report
-  python audit_rsc.py export.rsc --format json             # JSON output
-  python audit_rsc.py export.rsc --format html             # HTML report
-  python audit_rsc.py export.rsc --severity high           # High+Critical only
-  python audit_rsc.py export.rsc --check AUTH-001,FW-003   # Specific checks
+  python audit_rsc.py export.rsc --format text                          # Text report
+  python audit_rsc.py export.rsc --format json                           # JSON output
+  python audit_rsc.py export.rsc --format html                           # HTML report
+  python audit_rsc.py export.rsc --severity high                         # High+Critical only
+  python audit_rsc.py export.rsc --check AUTH-001,FW-003                 # Specific checks
+  python audit_rsc.py export.rsc --cve                                    # CVE vulnerability check
+  python audit_rsc.py export.rsc --cve --cve-live                        # Live NVD CVE lookup
+  python audit_rsc.py export.rsc --conflicts                             # Rule conflict analysis
+  python audit_rsc.py export.rsc --ioc                                    # Compromise indicator check
+  python audit_rsc.py export.rsc --lint my-script.rsc                   # Lint separate .rsc script
+  python audit_rsc.py export.rsc --skip-wifi                            # Skip WiFi checks
+  python audit_rsc.py export.rsc --skip-routing                         # Skip routing checks
   python audit_rsc.py export.rsc --output report.html      # Save to file
   python audit_rsc.py export.rsc --cve                     # Include CVE check
   python audit_rsc.py export.rsc --cve --cve-live          # CVE + NVD live lookup

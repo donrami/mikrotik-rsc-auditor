@@ -9,7 +9,7 @@
 [![Checks](https://img.shields.io/badge/checks-108-success)](scripts/audit_rsc.py)
 [![CLI](https://img.shields.io/badge/CLI-ready-brightgreen)](README.md)
 
-**Scans MikroTik RouterOS .rsc exports for security issues, misconfigurations, and compliance gaps -- 108 checks across 9 domains, with CVSS scoring, conflict detection, CVE lookup, and a script linter.**
+**Scans MikroTik RouterOS .rsc exports for security issues, misconfigurations, and compliance gaps - 108 checks across 9 domains, with CVSS scoring, conflict detection, CVE lookup, and a script linter.**
 
 ---
 
@@ -20,10 +20,10 @@
 | 108 Security Checks | Authentication, services, firewall, system hardening, networking, routing, WiFi, scripts, compliance |
 | CVSS v3.1 Scoring | Every finding scored with severity (Critical/High/Medium/Low/Info) and CVSS vector |
 | Compliance Mapping | Each finding cross-referenced to CIS, NIST SP 800-53, ISO 27001, and PCI-DSS controls |
-| Conflict Detection | 8 rule conflict types -- unreachable rules, NAT bypasses, orphan marks, duplicates, and more |
-| IoC Detection | 10 compromise indicators -- scheduler backdoors, DNS hijacking, cryptominers, C2 patterns |
+| Conflict Detection | 8 rule conflict types - unreachable rules, NAT bypasses, orphan marks, duplicates, and more |
+| IoC Detection | 10 compromise indicators - scheduler backdoors, DNS hijacking, cryptominers, C2 patterns |
 | Script Linter | 15+ rules with scope-aware context suppression, guard tracking, CI-ready exit codes |
-| Zero Dependencies | Uses only Python stdlib -- runs on any system with Python 3.10+ |
+| Zero Dependencies | Uses only Python stdlib - runs on any system with Python 3.10+ |
 | Pi Agent Integration | Also works as a pi skill with interactive onboarding for first-time users |
 
 ---
@@ -126,10 +126,10 @@ mikrotik-audit export.rsc --cve --conflicts --ioc --format html -o full-report.h
 | `--cve-live` | flag | Enable live NIST NVD API lookup (requires internet) | off |
 | `--conflicts` | flag | Enable 8-type rule conflict analysis | off |
 | `--ioc` | flag | Enable 10-type compromise indicator detection | off |
-| `--lint` | string | Path to a `.rsc` script file to lint (used alongside the config file) | -- |
+| `--lint` | string | Path to a `.rsc` script file to lint (used alongside the config file) | - |
 | `--skip-wifi` | flag | Skip WiFi security checks (for non-wireless devices) | off |
 | `--skip-routing` | flag | Skip routing security checks (BGP/OSPF) | off |
-| `-o, --output` | path | Save report to file instead of stdout | -- |
+| `-o, --output` | path | Save report to file instead of stdout | - |
 
 ---
 
@@ -137,10 +137,10 @@ mikrotik-audit export.rsc --cve --conflicts --ioc --format html -o full-report.h
 
 When installed as a pi agent skill, the auditor runs an interactive setup on first use:
 
-1. **Device Role** -- Home router / Office gateway / Enterprise / ISP -- determines security baseline severity
-2. **Services in Use** -- Multi-select which features this device provides (WiFi, NAT, DHCP, VPN, routing, CAPsMAN)
-3. **Audit Scope** -- Quick review / Standard / Compliance -- controls check depth
-4. **Conditional Follow-ups** -- Compliance framework, WiFi type, routing profile (only if relevant)
+1. **Device Role** - Home router / Office gateway / Enterprise / ISP - determines security baseline severity
+2. **Services in Use** - Multi-select which features this device provides (WiFi, NAT, DHCP, VPN, routing, CAPsMAN)
+3. **Audit Scope** - Quick review / Standard / Compliance - controls check depth
+4. **Conditional Follow-ups** - Compliance framework, WiFi type, routing profile (only if relevant)
 
 Answers are saved to `~/.config/mikrotik-auditor/profile.yml`. Subsequent runs skip the questions.
 
@@ -150,7 +150,7 @@ pi install npm:mikrotik-rsc-auditor
 
 # Run interactively (first time)
 mikrotik-audit export.rsc
-# -- asks 3-4 questions, then runs a tailored audit
+# - asks 3-4 questions, then runs a tailored audit
 ```
 
 ---
@@ -268,7 +268,7 @@ The package ships with a `SKILL.md` that registers it as a pi agent skill.
 ## Requirements
 
 - Python 3.10 or later
-- Zero external Python dependencies -- only standard library
+- Zero external Python dependencies - only standard library
 - For live CVE lookup: internet access and optional `NVD_API_KEY` environment variable
 - For linting: RouterOS script files (`.rsc`)
 
@@ -282,7 +282,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on reporting bugs, suggest
 
 ## License
 
-MIT License -- see [LICENSE](LICENSE) for full text.
+MIT License - see [LICENSE](LICENSE) for full text.
 
 ---
 

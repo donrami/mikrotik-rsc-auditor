@@ -16,13 +16,12 @@ jobs:
       - name: Test imports
         run: |
           python -c "
-          import sys; sys.path.insert(0, 'scripts')
-          from audit_rsc import RSCAuditor
-          from cve_database import check_cve_for_version, parse_version, version_matches_pattern
-          from conflict_analyzer import ConflictAnalyzer, ConflictType
-          from conflict_explanations import get_explanation
-          from ioc_analyzer import IoCAnalyzer, IoCType
-          import lint_rsc
+          from scripts.audit_rsc import RSCAuditor
+          from scripts.cve_database import check_cve_for_version, parse_version, version_matches_pattern
+          from scripts.conflict_analyzer import ConflictAnalyzer, ConflictType
+          from scripts.conflict_explanations import get_explanation
+          from scripts.ioc_analyzer import IoCAnalyzer, IoCType
+          import scripts.lint_rsc
           print('All imports OK')
           "
       - name: Syntax check
@@ -30,8 +29,7 @@ jobs:
       - name: CVE database sanity
         run: |
           python -c "
-          import sys; sys.path.insert(0, 'scripts')
-          from cve_database import check_cve_for_version
+          from scripts.cve_database import check_cve_for_version
           cves = check_cve_for_version('7.5')
           assert len(cves) > 0, 'No CVEs found for v7.5'
           v6_cves = [c for c in check_cve_for_version('6.42.6') if c.fixed_version.startswith('7')]
@@ -41,11 +39,10 @@ jobs:
       - name: Linter test
         run: |
           python -c "
-          import sys; sys.path.insert(0, 'scripts')
-          import lint_rsc
-          result = lint_rsc.lint_text('/ip firewall filter add chain=input action=accept')
+          import scripts.lint_rsc as linter
+          result = linter.lint_text('/ip firewall filter add chain=input action=accept')
           assert len(result) == 0, f'Should not flag simple rule: {result}'
-          result = lint_rsc.lint_text('/system reset-configuration')
+          result = linter.lint_text('/system reset-configuration')
           assert len(result) > 0, 'Should flag destructive command'
           print(f'Linter: destruction detected ({len(result)} findings)')
           "

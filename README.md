@@ -35,7 +35,7 @@
 pip install mikrotik-rsc-auditor
 
 # Audit a RouterOS export
-mikrotik-auditor my-config.rsc
+mikrotik-audit my-config.rsc
 ```
 
 ---
@@ -239,7 +239,7 @@ mikrotik-rsc-auditor/
 pip install mikrotik-rsc-auditor
 ```
 
-This makes the `mikrotik-auditor` command available on your PATH. Requires Python 3.10 or later.
+This makes the `mikrotik-audit` command available on your PATH. Requires Python 3.10 or later.
 
 ### Pi Agent Skill (interactive chat mode)
 

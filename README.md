@@ -31,11 +31,11 @@
 ## Quick Start
 
 ```bash
-# Install as a pi agent skill (adds interactive onboarding in chat)
-pi install npm:mikrotik-rsc-auditor
+# Install (requires Python 3.10+)
+pip install mikrotik-rsc-auditor
 
-# Or run directly from source
-python3 scripts/audit_rsc.py export.rsc
+# Audit a RouterOS export
+mikrotik-auditor my-config.rsc
 ```
 
 ---
@@ -233,40 +233,21 @@ mikrotik-rsc-auditor/
 
 ## Installation
 
-### Via pi (npm registry) - skill only
+### CLI Tool (recommended)
+
+```bash
+pip install mikrotik-rsc-auditor
+```
+
+This makes the `mikrotik-auditor` command available on your PATH. Requires Python 3.10 or later.
+
+### Pi Agent Skill (interactive chat mode)
 
 ```bash
 pi install npm:mikrotik-rsc-auditor
 ```
 
-This installs the auditor as a **pi agent skill**. The `mikrotik-audit` command is not automatically added to your PATH. To run the CLI:
-
-```bash
-# From the install directory (works with any pi setup)
-~/.pi/agent/npm/node_modules/.bin/mikrotik-audit export.rsc
-
-# Or via npx
-npx --package mikrotik-rsc-auditor mikrotik-audit export.rsc
-
-# Or add the bin directory to your shell profile
-echo 'export PATH="$HOME/.pi/agent/npm/node_modules/.bin:$PATH"' >> ~/.bashrc
-```
-
-### From source
-
-```bash
-git clone https://github.com/donrami/mikrotik-rsc-auditor.git
-cd mikrotik-rsc-auditor
-python3 scripts/audit_rsc.py export.rsc
-```
-
-### As a pi agent skill (interactive mode)
-
-```bash
-pi install npm:mikrotik-rsc-auditor
-```
-
-This registers the skill for use within the pi agent chat. The skill enables interactive onboarding: on first use, it asks about device role, services, and audit scope, then runs a tailored audit.
+This registers the auditor as a pi agent skill with interactive onboarding. When you invoke the skill in chat on a `.rsc` file, it asks about device role, services, and audit scope before running a tailored audit.
 
 ---
 

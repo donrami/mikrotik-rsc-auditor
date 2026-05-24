@@ -34,9 +34,16 @@
     "LICENSE",
     "package.json"
   ],
-  "bin": {
-    "mikrotik-audit": "bin/mikrotik-audit"
-  },
+  "files": [
+    "SKILL.md",
+    "scripts/*.py",
+    "scripts/__init__.py",
+    "references/",
+    "examples/",
+    "README.md",
+    "LICENSE",
+    "package.json"
+  ],
   "pi": {
     "skills": ["."]
   }

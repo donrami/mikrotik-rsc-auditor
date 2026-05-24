@@ -1,0 +1,38 @@
+{
+  "name": "mikrotik-rsc-auditor",
+  "version": "0.1.0",
+  "description": "MikroTik RouterOS .rsc auditor — 108 security checks, CVSS scoring, conflict detection, CVE lookup & linting",
+  "keywords": [
+    "pi-package",
+    "pi-skill",
+    "mikrotik",
+    "routeros",
+    "security",
+    "security-audit",
+    "network-security",
+    "firewall",
+    "compliance",
+    "rsc"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/donrami/mikrotik-rsc-auditor.git"
+  },
+  "homepage": "https://github.com/donrami/mikrotik-rsc-auditor#readme",
+  "bugs": {
+    "url": "https://github.com/donrami/mikrotik-rsc-auditor/issues"
+  },
+  "author": "MikroTik RSC Auditor Contributors",
+  "files": [
+    "SKILL.md",
+    "scripts/",
+    "references/",
+    "examples/",
+    "README.md",
+    "LICENSE"
+  ],
+  "pi": {
+    "skills": ["."]
+  }
+}

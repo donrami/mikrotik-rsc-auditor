@@ -39,6 +39,8 @@ from .cve_database import check_cve_for_version, CVE
 from .conflict_analyzer import ConflictAnalyzer, ConflictType, ConflictResult
 from .ioc_analyzer import IoCAnalyzer, IoCType, IoCResult
 from . import lint_rsc as linter
+from .device_profiles import detect_device, get_profile, DeviceProfile, DEVICE_PROFILES
+from .check_hardware_map import CHECK_HARDWARE_MAP, get_check_rules
 # ─────────────────────────────────────
 
 # ────────────────────────────── Audit Check Definitions ──────────────────────────────
@@ -1326,8 +1328,8 @@ AUDIT_CHECKS: List[Dict[str, Any]] = [
         "id": "NET-006",
 "domain": "general",
         "name": "Bridge HW offload misconfiguration (hAP ac²)",
-        "severity": "Info",
-        "cvss": "0.0",
+        "severity": "High",
+        "cvss": "7.0",
         "category": "Network Configuration",
         "path": "/interface bridge",
         "description": "hAP ac² detected with bridge VLAN filtering — HW offload is disabled",
@@ -1774,13 +1776,13 @@ AUDIT_CHECKS: List[Dict[str, Any]] = [
         "id": "WIFI-012",
 "domain": "wifi",
         "name": "hAP ac² wifi-qcom-ac package (flash exhaustion)",
-        "severity": "High",
-        "cvss": "7.5",
+        "severity": "Medium",
+        "cvss": "5.0",
         "category": "WiFi Security",
         "path": "device model",
         "description": "hAP ac² device detected with wifi-qcom-ac package — 16MB flash constraint",
         "detect": [
-            r"#\s+.*?hAP\s+ac",
+            r"#\s+.*?hAP\s+ac\b",
             r"model\s*=\s*RBD52G",
         ],
         "context": "Requires live /system resource print to confirm flash space.",
@@ -2088,6 +2090,7 @@ class RSCAuditor:
         self.findings: List[Dict[str, Any]] = []
         self.device_model: str = "Unknown"
         self.lint_findings: List[Dict[str, Any]] = []
+        self.device_profile: Optional[DeviceProfile] = None
 
     def load(self) -> None:
         """Load and parse the .rsc file."""
@@ -2096,6 +2099,9 @@ class RSCAuditor:
         self.lines = self.raw_content.splitlines()
         self._parse_header()
         self._index_config_paths()
+        # Detect device profile from header
+        device_key = detect_device(self.lines[:30])
+        self.device_profile = get_profile(device_key) if device_key else None
 
     def _parse_header(self) -> None:
         """Extract metadata from export file header comments."""
@@ -2188,6 +2194,14 @@ class RSCAuditor:
 
         sev_order = {"Critical": 0, "High": 1, "Medium": 2, "Low": 3, "Info": 4}
 
+        # ── Hardware context ──
+        device_key: Optional[str] = None
+        if self.device_profile:
+            for key, profile in DEVICE_PROFILES.items():
+                if profile == self.device_profile:
+                    device_key = key
+                    break
+
         # ── Run built-in audit checks ──
         for check in AUDIT_CHECKS:
             # Apply filters
@@ -2215,9 +2229,36 @@ class RSCAuditor:
                 if self.device_model not in skip_models:
                     continue
 
+            # ── Hardware-profile aware filtering ──
+            hw_rules = CHECK_HARDWARE_MAP.get(check["id"], {})
+
+            # N/A check: skip if check doesn't apply to this device family
+            na_if_na = hw_rules.get("na_if_not_applicable", False)
+            if na_if_na:
+                applicable_models = hw_rules.get("applicable_models")
+                applicable_families = hw_rules.get("applicable_families")
+                if applicable_models and device_key and device_key not in applicable_models:
+                    continue
+                if applicable_families and self.device_profile \
+                        and self.device_profile.family not in applicable_families:
+                    continue
+
+            # Version threshold: skip if device is past the fixed threshold
+            version_threshold = hw_rules.get("version_threshold")
+            if version_threshold and parsed_version is not None:
+                if parsed_version >= float(version_threshold):
+                    continue
+
             # Run detection
             result = self._evaluate_check(check)
             if result is not None:
+                # Apply hardware-based severity override
+                sev_override = hw_rules.get("severity_override", {})
+                if sev_override:
+                    if device_key and device_key in sev_override:
+                        result["severity"] = sev_override[device_key]
+                    elif "default" in sev_override:
+                        result["severity"] = sev_override["default"]
                 self.findings.append(result)
 
         # ── CVE check ──

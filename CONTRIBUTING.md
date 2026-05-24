@@ -21,7 +21,7 @@ Open an issue with the `enhancement` label and describe:
 
 ```bash
 # Clone the repo
-git clone https://github.com/your-org/mikrotik-rsc-auditor.git
+git clone https://github.com/donrami/mikrotik-rsc-auditor.git
 cd mikrotik-rsc-auditor
 
 # Create virtual environment

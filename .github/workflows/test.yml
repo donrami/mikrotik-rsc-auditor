@@ -32,9 +32,10 @@ jobs:
           from scripts.cve_database import check_cve_for_version
           cves = check_cve_for_version('7.5')
           assert len(cves) > 0, 'No CVEs found for v7.5'
-          v6_cves = [c for c in check_cve_for_version('6.42.6') if c.fixed_version.startswith('7')]
-          assert len(v6_cves) == 0, f'v6 should not get v7-only CVEs: {[c.cve_id for c in v6_cves]}'
-          print(f'CVE sanity: {len(cves)} CVEs for v7.5, v6 clean')
+          v6_cves = check_cve_for_version('6.42.6')
+          v7_only = [c for c in v6_cves if all(not v.startswith('6.') and '6.*' not in v for v in c.affected_versions)]
+          assert len(v7_only) == 0, f'v6 got v7-only CVEs: {[c.cve_id for c in v7_only]}'
+          print(f'CVE sanity: {len(cves)} CVEs for v7.5, v6={len(v6_cves)} (no v7-only)')
           "
       - name: Linter test
         run: |

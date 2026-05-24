@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# MikroTik RouterOS .rsc Auditor CLI wrapper
+# Invokes the Python auditor script from the package directory.
+set -e
+
+# Resolve the package directory (works with symlinks from npm .bin/)
+SCRIPT_SRC="$(cd "$(dirname "$(readlink -f "$0" 2>/dev/null || echo "$0")")" && pwd)"
+PKG_DIR="$(dirname "$SCRIPT_SRC")"
+
+exec python3 "$PKG_DIR/scripts/audit_rsc.py" "$@"

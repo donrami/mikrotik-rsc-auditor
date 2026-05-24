@@ -31,14 +31,11 @@
 ## Quick Start
 
 ```bash
-# Install via pi (npm-based)
+# Install as a pi agent skill (adds interactive onboarding in chat)
 pi install npm:mikrotik-rsc-auditor
 
-# Audit a RouterOS export
-mikrotik-audit export.rsc
-
 # Or run directly from source
-python scripts/audit_rsc.py export.rsc
+python3 scripts/audit_rsc.py export.rsc
 ```
 
 ---
@@ -147,11 +144,9 @@ Answers are saved to `~/.config/mikrotik-auditor/profile.yml`. Subsequent runs s
 ```bash
 # Install as pi skill
 pi install npm:mikrotik-rsc-auditor
-
-# Run interactively (first time)
-mikrotik-audit export.rsc
-# - asks 3-4 questions, then runs a tailored audit
 ```
+
+When invoked in the pi agent chat on a `.rsc` file, the skill asks 3-4 questions before running the audit.
 
 ---
 
@@ -238,30 +233,40 @@ mikrotik-rsc-auditor/
 
 ## Installation
 
-### Via pi (npm registry)
+### Via pi (npm registry) - skill only
 
 ```bash
 pi install npm:mikrotik-rsc-auditor
 ```
 
-This makes the `mikrotik-audit` command available on your PATH.
+This installs the auditor as a **pi agent skill**. The `mikrotik-audit` command is not automatically added to your PATH. To run the CLI:
+
+```bash
+# From the install directory (works with any pi setup)
+~/.pi/agent/npm/node_modules/.bin/mikrotik-audit export.rsc
+
+# Or via npx
+npx --package mikrotik-rsc-auditor mikrotik-audit export.rsc
+
+# Or add the bin directory to your shell profile
+echo 'export PATH="$HOME/.pi/agent/npm/node_modules/.bin:$PATH"' >> ~/.bashrc
+```
 
 ### From source
 
 ```bash
 git clone https://github.com/donrami/mikrotik-rsc-auditor.git
 cd mikrotik-rsc-auditor
-# Run directly
-python scripts/audit_rsc.py export.rsc
+python3 scripts/audit_rsc.py export.rsc
 ```
 
-### As a pi agent skill
+### As a pi agent skill (interactive mode)
 
 ```bash
 pi install npm:mikrotik-rsc-auditor
 ```
 
-The package ships with a `SKILL.md` that registers it as a pi agent skill.
+This registers the skill for use within the pi agent chat. The skill enables interactive onboarding: on first use, it asks about device role, services, and audit scope, then runs a tailored audit.
 
 ---
 

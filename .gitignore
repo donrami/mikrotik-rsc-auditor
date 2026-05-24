@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+dist/
+build/
+*.egg
+venv/
+.venv/
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.*.swp
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+
+# Environment
+.env
+*.local
+
+# Git
+*.orig
+
+# Project docs / analysis (not part of the package)
+comparative-analysis/

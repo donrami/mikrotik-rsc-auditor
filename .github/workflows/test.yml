@@ -1,0 +1,51 @@
+name: Test
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install
+        run: pip install -e .
+      - name: Test imports
+        run: |
+          python -c "
+          import sys; sys.path.insert(0, 'scripts')
+          from audit_rsc import RSCAuditor
+          from cve_database import check_cve_for_version, parse_version, version_matches_pattern
+          from conflict_analyzer import ConflictAnalyzer, ConflictType
+          from conflict_explanations import get_explanation
+          from ioc_analyzer import IoCAnalyzer, IoCType
+          import lint_rsc
+          print('All imports OK')
+          "
+      - name: Syntax check
+        run: python -m py_compile scripts/audit_rsc.py
+      - name: CVE database sanity
+        run: |
+          python -c "
+          import sys; sys.path.insert(0, 'scripts')
+          from cve_database import check_cve_for_version
+          cves = check_cve_for_version('7.5')
+          assert len(cves) > 0, 'No CVEs found for v7.5'
+          v6_cves = [c for c in check_cve_for_version('6.42.6') if c.fixed_version.startswith('7')]
+          assert len(v6_cves) == 0, f'v6 should not get v7-only CVEs: {[c.cve_id for c in v6_cves]}'
+          print(f'CVE sanity: {len(cves)} CVEs for v7.5, v6 clean')
+          "
+      - name: Linter test
+        run: |
+          python -c "
+          import sys; sys.path.insert(0, 'scripts')
+          import lint_rsc
+          result = lint_rsc.lint_text('/ip firewall filter add chain=input action=accept')
+          assert len(result) == 0, f'Should not flag simple rule: {result}'
+          result = lint_rsc.lint_text('/system reset-configuration')
+          assert len(result) > 0, 'Should flag destructive command'
+          print(f'Linter: destruction detected ({len(result)} findings)')
+          "

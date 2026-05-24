@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-05-24
+
+### Fixed
+- CLI docstring examples now match actual argparse (missing file argument)
+- Compliance framework counts in README (CIS, NIST, ISO clause references)
+- Line count in README project structure (audit_rsc.py)
+- Duplicate `files` key in package.json
+
+## [0.1.0] - 2026-05-24
 ## [0.1.0] - 2026-05-24
 
 ### Added

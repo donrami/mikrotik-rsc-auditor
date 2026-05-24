@@ -1,7 +1,7 @@
 {
   "name": "mikrotik-rsc-auditor",
-  "version": "0.1.0",
-  "description": "MikroTik RouterOS .rsc auditor — 108 security checks, CVSS scoring, conflict detection, CVE lookup & linting",
+  "version": "0.1.1",
+  "description": "MikroTik RouterOS .rsc auditor \u2014 108 security checks, CVSS scoring, conflict detection, CVE lookup & linting",
   "keywords": [
     "pi-package",
     "pi-skill",
@@ -35,6 +35,8 @@
     "package.json"
   ],
   "pi": {
-    "skills": ["."]
+    "skills": [
+      "."
+    ]
   }
 }

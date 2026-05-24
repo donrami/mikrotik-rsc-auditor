@@ -1334,7 +1334,7 @@ AUDIT_CHECKS: List[Dict[str, Any]] = [
         "path": "/interface bridge",
         "description": "hAP ac² detected with bridge VLAN filtering — HW offload is disabled",
         "detect": [
-            r"#\s+.*?hAP\s+ac",
+            r"#\s+.*?hAP\s+ac\b",
             r"/interface\s+bridge\s+set\s+.*?vlan-filtering=yes\b",
         ],
         "context": "If vlan-filtering=yes is set on hAP ac² (RBD52G), HW offload is disabled. Consider dual-bridge workaround.",

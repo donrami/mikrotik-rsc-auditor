@@ -155,7 +155,7 @@ All interactivity lives in this SKILL.md — the Python tools remain pure CLI wi
 2. **Parse** the `.rsc` file — extract all configuration paths, commands, and parameters
 3. **Apply context** — Use profile answers to tailor check relevance, severity, and scope
 4. **Run audit checks** against each configuration domain in order (AUTH → SRV → FW → SYS → NET → ROUTE → WIFI → SCRIPT → COMP)
-5. **Assign severity** to each finding using the CVSS-based scale, adjusted by device role
+5. **Assign severity** to each finding using the CVSS-based scale, adjusted by device role and hardware profile
 6. **Generate remediation** — produce the exact RouterOS CLI commands to fix each finding
 7. **Score the config** — overall security score (0–100) with per-category breakdown
 8. **Generate reports** — structured JSON, raw text, and Markdown report format with severity grouping
@@ -175,6 +175,7 @@ Every audit produces a structured report with these sections:
 7.  Compliance Map — CIS/NIST/ISO/PCI-DSS control mappings per finding
 8.  Summary Statistics — counts by severity, category hits, false positive notes
 9.  Remediation Commands — per-finding RouterOS CLI commands (consolidation planned)
+10. Hardware Profile — detected device model and applied profile details
 ```
 
 ## Safety Guardrails
@@ -194,7 +195,7 @@ Every audit produces a structured report with these sections:
 - If `hide-sensitive` was used, password-related checks show `[REDACTED]` values, which must be noted as indeterminate.
 - RouterOS v7 vs v6 syntax differences are flagged but both are validated against their respective grammar.
 - hAP ac² flash space cannot be determined from a config export — requires live `/system resource print`.
-- Device model detection from export header is best-effort (model line may be truncated or absent).
+- Device model detection from export header is best-effort (model line may be truncated or absent). When no profile matches, a generic profile is used with default severity and no hardware-specific exclusions.
 
 ## References
 
@@ -204,6 +205,7 @@ Every audit produces a structured report with these sections:
 - [references/COMPLIANCE_MAPPING.md](references/COMPLIANCE_MAPPING.md) — CIS/NIST/ISO/PCI-DSS control mapping reference
 - [references/EXAMPLES.md](references/EXAMPLES.md) — Idempotent RouterOS scripting patterns with copy-paste ready code
 - [references/SCRIPTING_PITFALLS.md](references/SCRIPTING_PITFALLS.md) — Common RouterOS scripting mistakes and safe alternatives
+- [references/HARDWARE_COMPATIBILITY.md](references/HARDWARE_COMPATIBILITY.md) — Hardware compatibility matrix with device profiles, severity adjustments, and per-family check applicability for 15+ MikroTik device families
 - [scripts/audit_rsc.py](scripts/audit_rsc.py) — Python tool for automated offline .rsc audit with HTML/JSON/TXT reports
 
 ## Related Tools
@@ -217,6 +219,39 @@ The following companion scripts extend the auditor with specialized analysis cap
 - [scripts/ioc_analyzer.py](scripts/ioc_analyzer.py) — Indicator of Compromise (IoC) detection for signs of active RouterOS compromise. Checks for: scheduler fetch backdoors (VPNFilter pattern), SOCKS/HTTP proxies (Meris botnet), suspicious files, unknown admin users, DNS hijacking, mangle sniff rules, cryptominer indicators, and C2 patterns (IP:port, Telegram, Discord webhooks). Integrated via `--ioc` flag.
 
 - [scripts/lint_rsc.py](scripts/lint_rsc.py) — Heuristic script linter for pre-deployment validation of .rsc scripts. Features scope-tracking engine (5 scope kinds), context-aware suppression, and 15+ rules across 5 categories. Detects destructive commands, unconditional bulk removes, unguarded `add` operations, fixed numeric IDs, bare `import` usage, `:delay` in loops, and credential leakage in `:log` statements. Integrated via `--lint` flag.
+
+- [scripts/device_profiles.py](scripts/device_profiles.py) — Device profile definitions for 15+ MikroTik hardware families. Detects device model from export header and tailors audit checks (severity adjustments, N/A exclusions, special hardware checks) to the specific platform. Powers the Hardware Compatibility system.
+
+## Hardware Compatibility
+
+The auditor includes a hardware-aware device profile system that automatically tailors all 108 security checks to the specific MikroTik device being audited.
+
+### How It Works
+
+When processing an `.rsc` export, the auditor extracts the device model from the export header (`# model = ...`) and matches it against a library of 15+ device profiles covering all major MikroTik families:
+
+| Family | Examples | Key Difference |
+|--------|----------|----------------|
+| **hAP** | ac², ax², ax³, lite | WiFi checks, flash-constrained models, AX stability |
+| **CCR** | CCR1036, CCR2004, CCR2216 | No WiFi, BGP/OSPF critical, FastTrack unsupported on TileGX |
+| **CRS** | CRS3xx, CRS1xx/2xx | No WiFi, HW offload, switch ACL bypass considerations |
+| **RB** | RB750Gr3, RB4011, RB5009 | Varies: some no WiFi, LCD on 4011, containers on 5009 |
+| **cAP/wAP** | cAP ac/ax, wAP ac/ax | CAPsMAN native, some flash-constrained |
+| **CPE** | LHG, SXT, mANTBox | Outdoor, PtP encryption, no LCD |
+| **CHR/x86** | Virtual, bare metal | No hardware constraints, license throughput limits |
+
+### What Gets Tailored
+
+- **N/A exclusion**: WiFi checks are skipped on CCR, CRS, RB5009, and other non-WiFi devices
+- **Severity adjustment**: Flash-constrained devices (hAP ac², hAP lite) get elevated severity for flash exhaustion checks. BGP security is Critical on ISP/DC routers
+- **Hardware-specific checks**: AX stability warnings apply only to hAP ax²/ax³, LCD PIN checks only to devices with displays
+- **Threshold tuning**: Connection tracking limits, DNS cache sizes, and ICMP rate limits are adjusted based on available RAM and CPU architecture
+
+### Supported Platforms
+
+See [references/HARDWARE_COMPATIBILITY.md](references/HARDWARE_COMPATIBILITY.md) for the complete device profile reference, including detailed specifications, detection regex, severity adjustment rules, and per-family check applicability matrices.
+
+The profile data and detection logic live in [scripts/device_profiles.py](scripts/device_profiles.py), which can be extended with new device profiles as MikroTik releases new hardware.
 
 ## Development Workflow
 

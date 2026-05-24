@@ -74,5 +74,12 @@ class TestLinter:
 
     def test_clean_rule_no_false_positive(self):
         import scripts.lint_rsc
+        # Non-sensitive command should not trigger idempotency warnings
         result = scripts.lint_rsc.lint_text(":global myVar \"hello\"")
         assert len(result) == 0, f"Clean command flagged: {result}"
+
+    def test_unguarded_add_detected(self):
+        import scripts.lint_rsc
+        # Unguarded add on sensitive menu IS a real finding
+        result = scripts.lint_rsc.lint_text("/ip firewall filter add chain=input action=accept")
+        assert len(result) > 0, "Should flag unguarded add on firewall"

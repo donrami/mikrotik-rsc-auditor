@@ -41,8 +41,12 @@ jobs:
         run: |
           python -c "
           import scripts.lint_rsc as linter
+          # Non-sensitive command should not be flagged
+          result = linter.lint_text(':global myVar "hello"')
+          assert len(result) == 0, f'Should not flag global decl: {result}'
+          # Unguarded add on sensitive menu IS a real finding (idempotency warning)
           result = linter.lint_text('/ip firewall filter add chain=input action=accept')
-          assert len(result) == 0, f'Should not flag simple rule: {result}'
+          assert len(result) > 0, 'Should flag unguarded add on firewall'
           result = linter.lint_text('/system reset-configuration')
           assert len(result) > 0, 'Should flag destructive command'
           print(f'Linter: destruction detected ({len(result)} findings)')

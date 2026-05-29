@@ -30,8 +30,12 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
+      - name: Setup Node (use runner's default, ensure npm ≥11)
+        run: |
+          echo "Node: $(node -v), npm: $(npm -v)"
+          if [ "$(npm -v | cut -d. -f1)" -lt 11 ]; then
+            npm install -g npm@latest
+            echo "Upgraded npm to $(npm -v)"
+          fi
       - name: Publish to npm
         run: npm publish --access public

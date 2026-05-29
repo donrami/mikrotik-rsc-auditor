@@ -35,7 +35,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
 # ───────── New Module Imports ─────────
-from .cve_database import check_cve_for_version, CVE
+from .cve_database import check_cve_for_version, compare_versions, parse_version, CVE
 from .conflict_analyzer import ConflictAnalyzer, ConflictType, ConflictResult
 from .ioc_analyzer import IoCAnalyzer, IoCType, IoCResult
 from . import lint_rsc as linter
@@ -305,6 +305,7 @@ AUDIT_CHECKS: List[Dict[str, Any]] = [
         "detect": [
             r"/user\s+settings\s+set\s+.*?minimum-password-length=",
         ],
+        "skip_if_version_lt": "7.0",
         "negate": True,
         "remediation": (
             "/user settings set minimum-password-length=12"
@@ -481,8 +482,12 @@ AUDIT_CHECKS: List[Dict[str, Any]] = [
         "path": "/ip neighbor discovery",
         "description": "Neighbor discovery (MNDP) enabled on WAN-facing interfaces, leaking device info at L2",
         "detect": [
+            # v6 syntax
             r"/ip\s+neighbor\s+discovery\s+set\s+.*?discover=yes\b",
+            # v6 syntax
             r"/ip\s+neighbor\s+discovery-settings\s+set\s+.*?discover=yes\b",
+            # v7 syntax — discovery enabled when discover-interface-list is set to non-none value
+            r"/ip\s+neighbor\s+discovery-settings\s+set\s+.*?discover-interface-list=(?!none\b)\S+",
         ],
         "remediation": (
             "/ip neighbor discovery set interfaces=all discover=no\n"
@@ -1036,6 +1041,7 @@ AUDIT_CHECKS: List[Dict[str, Any]] = [
         ],
         "negate": True,
         "remediation": "/routing bgp connection set [find remote.address=<peer>] ttl=1",
+        "skip_if_version_lt": "7.0",
         "compliance": {"cis": "4.16", "nist": "SC-7", "iso": "A.8.20", "pci": "1.2"},
     },
 
@@ -1166,7 +1172,7 @@ AUDIT_CHECKS: List[Dict[str, Any]] = [
         "detect": [
             r"/system\s+package\s+update\s+set\s+.*?allow-signed=no\b",
         ],
-        "skip_if_version_ge": 7.0,
+        "skip_if_version_ge": "7.0",
         "remediation": (
             "/system package update set allow-signed=yes"
         ),
@@ -1281,6 +1287,7 @@ AUDIT_CHECKS: List[Dict[str, Any]] = [
             r"/ip\s+dhcp-server\s+config\s+set\s+store-leases-on-disk=yes\b",
         ],
         "skip_unless_model_in": ["RBD52G", "RB750", "RB750P", "RB750GL", "RB750Gr3", "RB951", "hAP ac", "hAP ac²", "hAP ac2", "CRS", "CRS1"],
+        "skip_if_version_ge": "7.0",
         "remediation": (
             "/ip dhcp-server config set store-leases-on-disk=no"
         ),
@@ -1464,6 +1471,7 @@ AUDIT_CHECKS: List[Dict[str, Any]] = [
             r"/routing\s+bgp\s+connection\s+add\s+.*?\bttl=\d+\b",
         ],
         "negate": True,
+        "skip_if_version_lt": "7.0",
         "remediation": (
             "# For directly connected eBGP peers:\n"
             "/routing bgp connection set [find remote.address=<peer-ip>] ttl=1"
@@ -1483,6 +1491,7 @@ AUDIT_CHECKS: List[Dict[str, Any]] = [
             r"/routing\s+bgp\s+connection\s+add\s+.*?\bmax-prefix=\d+\b",
         ],
         "negate": True,
+        "skip_if_version_lt": "7.0",
         "remediation": (
             "/routing bgp connection set [find remote.address=<peer-ip>] max-prefix=1000"
         ),
@@ -2073,7 +2082,9 @@ class RSCAuditor:
     def __init__(self, filepath: str, severity_filter: Optional[str] = None,
                  check_filter: Optional[List[str]] = None,
                  do_cve: bool = False, do_cve_live: bool = False,
-                 do_conflicts: bool = False, do_ioc: bool = False, skip_wifi: bool = False, skip_routing: bool = False):
+                 do_conflicts: bool = False, do_ioc: bool = False,
+                 do_cross_checks: bool = False,
+                 skip_wifi: bool = False, skip_routing: bool = False):
         self.filepath = filepath
         self.severity_filter = severity_filter
         self.check_filter = set(check_filter) if check_filter else None
@@ -2081,6 +2092,7 @@ class RSCAuditor:
         self.do_cve_live = do_cve_live
         self.do_conflicts = do_conflicts
         self.do_ioc = do_ioc
+        self.do_cross_checks = do_cross_checks
         self.skip_wifi = skip_wifi
         self.skip_routing = skip_routing
         self.raw_content: str = ""
@@ -2133,22 +2145,20 @@ class RSCAuditor:
                 if mm:
                     self.device_model = mm.group(1)
 
-    def _parse_ros_version(self) -> Optional[float]:
-        """Extract RouterOS version as a float for comparison (e.g., 6.49 -> 6.49, 7.15 -> 7.15).
+    def _parse_ros_version(self) -> Optional[str]:
+        """Extract RouterOS version string from export header.
 
-        Handles prerelease versions like "7.10rc1" by stripping the prerelease suffix
-        from the minor version part before float conversion.
+        Returns the raw version string (e.g., "7.15", "6.49.6", "7.10rc1")
+        or None if no version could be extracted.
+
+        Validation is done via cve_database.parse_version() to ensure the
+        string is a parseable RouterOS version before returning it.
         """
         ver_str = self.header.get("version", "")
         if ver_str:
-            try:
-                parts = ver_str.split(".")
-                # Strip any non-numeric prerelease suffix from the minor version
-                # e.g., "10rc1" -> "10", "1beta3" -> "1"
-                minor = re.sub(r'[^0-9].*', '', parts[1])
-                return float(f"{parts[0]}.{minor}")
-            except (ValueError, IndexError):
-                return None
+            parsed = parse_version(ver_str)
+            if parsed is not None:
+                return ver_str
         return None
 
     def _index_config_paths(self) -> None:
@@ -2217,10 +2227,23 @@ class RSCAuditor:
             if required >= 0 and check_sev > required:
                 continue
 
-            # Apply version-gating (skip_if_version_ge)
-            skip_version = check.get("skip_if_version_ge", None)
-            if skip_version is not None and parsed_version is not None:
-                if parsed_version >= skip_version:
+            # ── Version gating ──
+            # skip_if_version_ge: skip this check if parsed_version >= gate (fail-closed)
+            skip_ge = check.get("skip_if_version_ge", None)
+            if skip_ge is not None:
+                if parsed_version is None:
+                    continue  # fail-closed: can't determine version → skip check
+                cmp = compare_versions(parsed_version, skip_ge)
+                if cmp is not None and cmp >= 0:
+                    continue
+
+            # skip_if_version_lt: skip this check if parsed_version < gate (fail-closed)
+            skip_lt = check.get("skip_if_version_lt", None)
+            if skip_lt is not None:
+                if parsed_version is None:
+                    continue  # fail-closed: can't determine version → skip check
+                cmp = compare_versions(parsed_version, skip_lt)
+                if cmp is not None and cmp < 0:
                     continue
 
             # Apply model-gating (skip_unless_model_in)
@@ -2243,10 +2266,10 @@ class RSCAuditor:
                         and self.device_profile.family not in applicable_families:
                     continue
 
-            # Version threshold: skip if device is past the fixed threshold
             version_threshold = hw_rules.get("version_threshold")
             if version_threshold and parsed_version is not None:
-                if parsed_version >= float(version_threshold):
+                cmp = compare_versions(parsed_version, version_threshold)
+                if cmp is not None and cmp >= 0:
                     continue
 
             # Run detection
@@ -2351,6 +2374,39 @@ class RSCAuditor:
                     "compliance": {},
                 })
 
+        # ── Cross-domain consistency checks ──
+        if self.do_cross_checks:
+            try:
+                from .cross_checks import run_cross_checks
+                annotations = run_cross_checks(self.raw_content)
+                for ann in annotations:
+                    if ann.target_finding_id:
+                        # Attach to existing finding
+                        for f in self.findings:
+                            if f["id"] == ann.target_finding_id:
+                                f.setdefault("cross_checks", []).append(
+                                    ann.to_annotation_dict()
+                                )
+                                break
+                        else:
+                            # No matching finding — create standalone
+                            self.findings.append(ann.to_finding_dict())
+                    else:
+                        # Standalone finding
+                        self.findings.append(ann.to_finding_dict())
+            except Exception as e:
+                self.findings.append({
+                    "id": "XCHK-ERROR",
+                    "name": "Cross-Check Error",
+                    "severity": "Info",
+                    "cvss": "0.0",
+                    "category": "Cross-Domain Consistency",
+                    "path": "analysis",
+                    "description": f"Cross-check analysis failed: {e}",
+                    "details": "",
+                    "remediation": "",
+                    "compliance": {},
+                })
         # Sort by severity (Critical first)
         self.findings.sort(key=lambda f: sev_order.get(f["severity"], 99))
         return self.findings
@@ -2816,6 +2872,7 @@ Examples:
   python audit_rsc.py export.rsc --conflicts                             # Rule conflict analysis
   python audit_rsc.py export.rsc --ioc                                    # Compromise indicator check
   python audit_rsc.py export.rsc --lint my-script.rsc                   # Lint separate .rsc script
+  python audit_rsc.py export.rsc --cross-checks                        # Cross-domain consistency checks
   python audit_rsc.py export.rsc --skip-wifi                            # Skip WiFi checks
   python audit_rsc.py export.rsc --skip-routing                         # Skip routing checks
   python audit_rsc.py export.rsc --output report.html      # Save to file
@@ -2843,6 +2900,8 @@ Examples:
                         help="Run indicator of compromise (IoC) detection")
     parser.add_argument("--lint", metavar="FILE",
                         help="Lint a separate .rsc script file for pre-deployment validation")
+    parser.add_argument("--cross-checks", action="store_true",
+                        help="Run cross-domain consistency checks")
     parser.add_argument("--skip-wifi", action="store_true",
                         help="Skip WiFi security checks (WIFI-*)")
     parser.add_argument("--skip-routing", action="store_true",
@@ -2866,6 +2925,7 @@ Examples:
         do_conflicts=args.conflicts,
         do_ioc=args.ioc,
         skip_wifi=getattr(args, 'skip_wifi', False),
+        do_cross_checks=args.cross_checks,
         skip_routing=getattr(args, 'skip_routing', False),
     )
 

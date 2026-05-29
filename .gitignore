@@ -32,3 +32,14 @@ Thumbs.db
 
 # Project docs / analysis (not part of the package)
 comparative-analysis/
+docs/
+
+# Tooling caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Generated npm artifacts (pi harness)
+package-lock.json

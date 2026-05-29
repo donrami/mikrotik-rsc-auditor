@@ -6,10 +6,10 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![npm](https://img.shields.io/npm/v/mikrotik-rsc-auditor)](https://www.npmjs.com/package/mikrotik-rsc-auditor)
 [![Pi Skill](https://img.shields.io/badge/pi-skill-purple)](https://github.com/nicolodavis/pi)
-[![Checks](https://img.shields.io/badge/checks-108-success)](scripts/audit_rsc.py)
+[![Checks](https://img.shields.io/badge/checks-115-success)](scripts/audit_rsc.py)
 [![CLI](https://img.shields.io/badge/CLI-ready-brightgreen)](README.md)
 
-**Scans MikroTik RouterOS .rsc exports for security issues, misconfigurations, and compliance gaps - 108 checks across 9 domains, with CVSS scoring, conflict detection, CVE lookup, and a script linter.**
+**Scans MikroTik RouterOS .rsc exports for security issues, misconfigurations, and compliance gaps — 115 checks across 9 domains, with CVSS scoring, conflict detection, CVE lookup, cross-domain checks, and a script linter.**
 
 ---
 
@@ -20,10 +20,12 @@
 | 108 Security Checks | Authentication, services, firewall, system hardening, networking, routing, WiFi, scripts, compliance |
 | CVSS v3.1 Scoring | Every finding scored with severity (Critical/High/Medium/Low/Info) and CVSS vector |
 | Compliance Mapping | Each finding cross-referenced to CIS, NIST SP 800-53, ISO 27001, and PCI-DSS controls |
-| Conflict Detection | 8 rule conflict types - unreachable rules, NAT bypasses, orphan marks, duplicates, and more |
-| IoC Detection | 10 compromise indicators - scheduler backdoors, DNS hijacking, cryptominers, C2 patterns |
+| Version Gating | Checks auto-skip when the RouterOS version doesn't support the feature being tested |
+| Cross-Domain Checks | 7 consistency checks — catches contradictions between config areas (e.g. DHCP points DNS at router but router has no forwarders) |
+| Conflict Detection | 8 rule conflict types — unreachable rules, NAT bypasses, orphan marks, duplicates, and more |
+| IoC Detection | 10 compromise indicators — scheduler backdoors, DNS hijacking, cryptominers, C2 patterns |
 | Script Linter | 15+ rules with scope-aware context suppression, guard tracking, CI-ready exit codes |
-| Zero Dependencies | Uses only Python stdlib - runs on any system with Python 3.10+ |
+| Zero Dependencies | Uses only Python stdlib — runs on any system with Python 3.10+ |
 | Pi Agent Integration | Also works as a pi skill with interactive onboarding for first-time users |
 
 ---
@@ -91,6 +93,12 @@ mikrotik-audit export.rsc --cve --cve-live
 mikrotik-audit export.rsc --conflicts
 ```
 
+### Cross-Domain Consistency Checks
+
+```bash
+mikrotik-audit export.rsc --cross-checks
+```
+
 ### IoC / Compromise Detection
 
 ```bash
@@ -113,9 +121,8 @@ mikrotik-audit export.rsc --skip-routing
 ### All Features
 
 ```bash
-mikrotik-audit export.rsc --cve --conflicts --ioc --format html -o full-report.html
+mikrotik-audit export.rsc --cve --conflicts --ioc --cross-checks --format html -o full-report.html
 ```
-
 ---
 
 ## CLI Flags
@@ -132,6 +139,7 @@ mikrotik-audit export.rsc --cve --conflicts --ioc --format html -o full-report.h
 | `--ioc` | flag | Enable 10-type compromise indicator detection | off |
 | `--lint` | string | Path to a `.rsc` script file to lint (used alongside the config file) | - |
 | `--skip-wifi` | flag | Skip WiFi security checks (for non-wireless devices) | off |
+| `--cross-checks` | flag | Enable 7 cross-domain consistency checks | off |
 | `--skip-routing` | flag | Skip routing security checks (BGP/OSPF) | off |
 | `-o, --output` | path | Save report to file instead of stdout | - |
 
@@ -206,14 +214,15 @@ Self-contained dark-mode compatible HTML with color-coded severity badges, score
 ```
 mikrotik-rsc-auditor/
 ├── scripts/
-│   ├── audit_rsc.py              # Main entry point (2,901 lines)
-│   ├── cve_database.py            # CVE lookup + NVD API (1,111 lines)
-│   ├── conflict_analyzer.py       # 8 conflict types (1,551 lines)
-│   ├── conflict_explanations.py   # User-friendly explanations (650 lines)
-│   ├── device_profiles.py         # Hardware-specific profile system
-│   ├── ioc_analyzer.py            # 10 IoC types (784 lines)
-│   ├── sanitize_rsc.py            # Config redaction for safe sharing (72 lines)
-│   └── lint_rsc.py                # Script linter with scope tracking (587 lines)
+│   ├── audit_rsc.py              # Main entry point (~2,970 lines)
+│   ├── cross_checks.py           # 7 cross-domain consistency checks (~810 lines)
+│   ├── cve_database.py           # CVE lookup + NVD API (1,111 lines)
+│   ├── conflict_analyzer.py      # 8 conflict types (1,551 lines)
+│   ├── conflict_explanations.py  # User-friendly explanations (650 lines)
+│   ├── device_profiles.py        # Hardware-specific profile system
+│   ├── ioc_analyzer.py           # 10 IoC types (784 lines)
+│   ├── sanitize_rsc.py           # Config redaction for safe sharing (72 lines)
+│   └── lint_rsc.py               # Script linter with scope tracking (587 lines)
 ├── references/
 │   ├── AUDIT_CHECKS.md            # 108-item audit checklist
 │   ├── SECURITY_BASELINE.md       # Secure configuration baseline
@@ -226,7 +235,7 @@ mikrotik-rsc-auditor/
 │   ├── sanitized-export.rsc       # Sanitized real-world export
 │   ├── minimal-config.rsc         # Minimal secure configuration
 │   └── vulnerable-config.rsc      # Deliberately insecure demo config
-├── tests/                         # Test suite
+├── tests/                         # 74 tests (version gating, cross-checks, integration)
 ├── CHANGELOG.md                   # Release history
 ├── CONTRIBUTING.md                # Contribution guide
 ├── LICENSE                        # MIT license

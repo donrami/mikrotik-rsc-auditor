@@ -2,6 +2,26 @@
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-05-29
+
+### Added
+- 7 cross-domain consistency checks (XCHK-*) via `--cross-checks` flag
+- `scripts/cross_checks.py` module — detects config contradictions between domains
+
+### Changed
+- Version gating engine: `skip_if_version_lt` support, fail-closed on unparseable versions
+- Version parser unified with `cve_database.parse_version()` — no crash on 7.19.2
+- SRV-006 detect pattern: now matches v7 `discover-interface-list=` syntax
+- AUTH-014 now gated to v7 only (`minimum-password-length` doesn't exist in v6)
+- FW-017, ROUTE-004, ROUTE-005 now gated to v7 only (BGP connection paths)
+- NET-003 now gated to v7 only (`store-leases-on-disk` removed in v7)
+
+### Fixed
+- Runtime crash on patch-level versions (e.g. RouterOS 7.19.2)
+- False positives: BGP checks no longer fire on v6 configs
+- False positives: AUTH-014 no longer fires on v6 configs
+- False positives: NET-003 no longer fires on v7 configs
+
 ## [0.1.1] - 2026-05-24
 
 ### Fixed

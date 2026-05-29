@@ -6,7 +6,6 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![npm](https://img.shields.io/npm/v/mikrotik-rsc-auditor)](https://www.npmjs.com/package/mikrotik-rsc-auditor)
 [![Pi Skill](https://img.shields.io/badge/pi-skill-purple)](https://github.com/nicolodavis/pi)
-[![Checks](https://img.shields.io/badge/checks-115-success)](scripts/audit_rsc.py)
 [![CLI](https://img.shields.io/badge/CLI-ready-brightgreen)](README.md)
 
 **Scans MikroTik RouterOS .rsc exports for security issues, misconfigurations, and compliance gaps — 115 checks across 9 domains, with CVSS scoring, conflict detection, CVE lookup, cross-domain checks, and a script linter.**
